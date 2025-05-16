@@ -1,0 +1,27 @@
+{% load static %}
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=500, height=500, initial-scale=1.0">
+    <link rel="stylesheet" href="{%static 'style.css'%}">
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="{% static "script.js" %}"></script>
+    <title>pong</title>
+</head>
+<body>
+<header>pong</header>
+<main>
+
+    <div>
+        <p id="scoreboard">スコア <span id="opponent-score"></span>:<span id="my-score"></span></p>
+    </div>
+    <div class="l-field">
+        <div class="o-component" id="opponent-bar"></div>
+        <div class="o-component" id="ball"></div>
+        <div class="o-component" id="center-net"></div>
+        <div class="o-component" id="my-bar"></div>
+    </div>
+<main>
+</body>

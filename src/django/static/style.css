@@ -1,0 +1,37 @@
+* {
+    box-sizing: content-box;
+}
+
+.l-field{
+    display: flex;
+    position:relative;
+    width: 700px;
+    height:500px;
+    background-color: green;
+}
+
+.o-component{
+    background-color: red;
+    position: absolute;
+}
+
+#opponent-bar{
+    width: 30px;
+    height: 100px;
+    left: 10px;
+}
+#ball{
+    width: 20px;
+    height: 20px;
+}
+#center-net{
+    width: 10px;
+    height: 500px;
+    right: 50%;
+    left: 50%;
+}
+#my-bar{
+    width:30px;
+    height: 100px;
+    right: 10px;
+}
