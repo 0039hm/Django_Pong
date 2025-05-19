@@ -19,6 +19,8 @@ const framerate = 60; // [frame/s]
 
 const gamesetPoint = 3;
 
+const websocket = new WebSocket('ws://'+window.location.host+'/ws/pong/')
+
 //グローバル変数
 let myScore = 0;
 let opponentScore = 0;
@@ -161,12 +163,35 @@ $( document ).ready( function () {
     $( fieldArea ).hover( function ( e ) {
         $( fieldArea ).on( 'mousemove', function ( e ) {
             if ( barHeight / 2 < e.offsetY && e.offsetY < fieldHeight - barHeight / 2 ) {
-                bars[ 0 ].y = e.offsetY - barHeight / 2;
+                bars[ 0 ].y = e.offsetY - barHeight / 2; //FIXME もしかしてバーの座標中央中心??
                 $( myBar ).css( "top", e.offsetY - barHeight / 2 );
+
+                //websocket送信
+                websocket.send(JSON.stringify({
+                    type:'mousemove',
+                    offsetY: offsetY,
+                    offsetX: offsetX
+                }))
+                console.log('送信')
             }
 
         } );
     }, );
+
+    /////
+    //バーの動き同期してみる（テスト）
+    websocket.onmessage = (e)=>{
+        consle.log('received:' + e.data)
+        const data = JSON.parse(e.data)
+
+        if(data.type == 'mousemove'){
+            //FIXME コピペしてしまった
+            if ( barHeight / 2 < e.offsetY && e.offsetY < fieldHeight - barHeight / 2 ) {
+                bars[ 0 ].y = e.offsetY - barHeight / 2; //FIXME もしかしてバーの座標中央中心??
+                $( myBar ).css( "top", e.offsetY - barHeight / 2 );
+            } 
+        }
+    }
 
     //非同期処理
     //1ラリー
