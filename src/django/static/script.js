@@ -19,14 +19,16 @@ const framerate = 60; // [frame/s]
 
 const gamesetPoint = 3;
 
-const websocket = new WebSocket('ws://'+window.location.host+'/ws/pong/')
+const userId = Math.random().toString(32).substring(2)
+
 
 //グローバル変数
 let myScore = 0;
 let opponentScore = 0;
 
-function Player ( isMe ) {
+function Player ( isMe, isOnRight ) {
     this.isMe = isMe;
+    this.isOnRight = isOnRight
     this.score = 0;
     this.isWin = () => {
         return this.score >= gamesetPoint;
@@ -101,6 +103,7 @@ function Ball ( x, y, velX, velY ) {
 
 
     this.move = ( bar ) => {
+        this.hadBound = false
         let newX = this.x + this.velX / framerate;
         let newY = this.y + this.velY / framerate;
 
@@ -115,6 +118,8 @@ function Ball ( x, y, velX, velY ) {
             this.velX = -this.velX * 1.5;
             this.velY = bar.getBouncePoint(newY) * verticalMaxSpeed
             console.log(bar.getBouncePoint(newY))
+
+            this.hadBound = true
         }
 
         this.x = newX;
@@ -136,6 +141,10 @@ function Ball ( x, y, velX, velY ) {
         }
     };
 
+    this.serve = (towardMe)=>{
+
+    }
+
 }
 
 
@@ -144,6 +153,7 @@ function Ball ( x, y, velX, velY ) {
 
 //メインスレッド
 $( document ).ready( function () {
+    const websocket = new WebSocket('ws://'+window.location.host+'/ws/pong/')
 
     let ballobj;
     const players = [new Player(true),new Player(false)]
@@ -169,8 +179,8 @@ $( document ).ready( function () {
                 //websocket送信
                 websocket.send(JSON.stringify({
                     type:'mousemove',
-                    offsetY: offsetY,
-                    offsetX: offsetX
+                    offsetY: e.offsetY,
+                    offsetX: e.offsetX
                 }))
                 console.log('送信')
             }
@@ -179,19 +189,31 @@ $( document ).ready( function () {
     }, );
 
     /////
-    //バーの動き同期してみる（テスト）
+    //バーの動き受信してみる（テスト）
     websocket.onmessage = (e)=>{
-        consle.log('received:' + e.data)
+        console.log('received:' + e.data)
         const data = JSON.parse(e.data)
 
         if(data.type == 'mousemove'){
             //FIXME コピペしてしまった
-            if ( barHeight / 2 < e.offsetY && e.offsetY < fieldHeight - barHeight / 2 ) {
-                bars[ 0 ].y = e.offsetY - barHeight / 2; //FIXME もしかしてバーの座標中央中心??
-                $( myBar ).css( "top", e.offsetY - barHeight / 2 );
+            if ( barHeight / 2 < data.offsetY && data.offsetY < fieldHeight - barHeight / 2 ) {
+                console.log('フィールド内にいるよ!')
+                bars[ 1 ].y = data.offsetY - barHeight / 2; //FIXME もしかしてバーの座標中央中心??
+                $( myBar ).css( "top", data.offsetY - barHeight / 2 );
             } 
+
+
+        }else if(data.type == 'sync_ball'){
+            ballobj.x = fieldWidth - data.x
+            ballobj.y = data.y
+            ballobj.velX = -data.vel_x
+            ballobj.velY = data.vel_y
+
+        }else if (data.type == 'init'){
+            
         }
     }
+
 
     //非同期処理
     //1ラリー
@@ -205,7 +227,21 @@ $( document ).ready( function () {
             }else{
                 bar = bars[1]
             }
+
             ballobj.move(bar);
+
+            //レシーブしていたら、レシーブした側のボールの位置を相手に送信
+            if(ballobj.hadBound){
+                websocket.send(JSON.stringify({
+                    type: 'sync_ball',
+                    x: ballobj.x,
+                    y: ballobj.y,
+                    vel_x: ballobj.velX,
+                    vel_y: ballobj.velY
+                }))
+            }
+
+            //得点処理
             if ( ballobj.isScored() ) {
                 inGame = false;
 
